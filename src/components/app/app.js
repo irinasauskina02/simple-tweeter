@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import AppHeader from '../app-header';
-import AppSearchPanel from '../search-panel';
+import SearchPanel from '../search-panel';
 import PostStatusFilter from '../post-status-filter';
 import PostList from '../post-list';
 import PostAddForm from '../post-add-form';
@@ -15,13 +15,17 @@ export default class App extends Component{
                {label: 'Going to learn react', important: true, like: false, id: 1},
                {label: 'That is so good', important: false, like: false, id: 2},
                {label: 'I need a break...', important: false,  like: false,id: 3}   
-            ]
+            ],
+            term: '',
+            filter: 'all'
       };
       this.deleteItem = this.deleteItem.bind(this);
       this.addItem = this.addItem.bind(this);
       this.maxId = 4;
       this.onToggleLike = this.onToggleLike.bind(this);
       this.onToggleImportant = this.onToggleImportant.bind(this);
+      this.onUpdatePost = this.onUpdatePost.bind(this);
+      this.onFilterSelect = this.onFilterSelect.bind(this);
 
    }
    deleteItem(id) {
@@ -71,23 +75,58 @@ export default class App extends Component{
          }
       })
    }
+
+   searchPost(items, term) {
+      if (term.length === 0) {
+          return items
+      }
+
+      return items.filter((item) => {
+          return item.label.indexOf(term) > -1
+      });
+   }
+
+   filterPost (items, filter) {
+      if(filter === 'like') {
+         return items.filter( item => item.like);
+      } else {
+         return items;
+      }
+   }
+
+   onUpdatePost(term) {
+      
+      this.setState({term});
+   }
+
+   onFilterSelect(filter) {
+      this.setState({filter});
+   }
+
     render() {
-       const {data} = this.state;
-       const likes = data.filter(item => item.like).length;
+      const {data, term, filter} = this.state;
+      const likes = data.filter(item => item.like).length;
       const allPost = data.length;
+      const visiblePosts = this.filterPost( this.searchPost(data, term), filter);
       return( 
          <div className="app">
              <AppHeader 
                liked = {likes}
                allPost ={allPost} />
             <div className="search-panel d-flex">    
-               <AppSearchPanel/>
-               <PostStatusFilter/>
+               <SearchPanel 
+                  onUpdatePost = {this.onUpdatePost}
+               />
+               <PostStatusFilter
+                  filter = {filter}
+                  onFilterSelect = {this.onFilterSelect}
+               />
             </div>
-            <PostList posts = {this.state.data}
-            onDelete = {this.deleteItem}
-            onToggleImportant = {this.onToggleImportant}
-            onToggleLike = {this.onToggleLike}
+            <PostList 
+               posts = {visiblePosts}
+               onDelete = {this.deleteItem}
+               onToggleImportant = {this.onToggleImportant}
+               onToggleLike = {this.onToggleLike}
                />
             <PostAddForm
             onAdd = {this.addItem}/>  
